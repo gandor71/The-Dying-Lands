@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+
+<spawning>   <!-- Biome spawning -->
+
+
+    <biome name="city">   						<!-- All Navezgane Cities Now not used -->
+	
+		<spawn maxcount="2" respawndelay="2" time="Day"   entitygroup="ZombieFodderActive" />
+		<spawn maxcount="2" respawndelay="2" time="Night"   entitygroup="ZombieFODLDRActiveMix" />
+		<spawn maxcount="1" respawndelay="7" time="Any" entitygroup="EnemyAnimalsForest"/>
+		<spawn maxcount="1" respawndelay="7" time="Any" entitygroup="FriendlyAnimalsForest"/>
+		
+    </biome>
+	
+
+    <biome name="forest">						<!--   Spawns for Forest Biome   -->
+	
+		<spawn maxcount="1" respawndelay="2" time="Day"   entitygroup="Ghouls" />
+		<spawn maxcount="3" respawndelay="1" time="Night"   entitygroup="Ghouls" />
+		
+		<spawn maxcount="1" respawndelay="2" time="Any"   entitygroup="ZombieLDRAndFeralLDR" />
+		<!--<spawn maxcount="1" respawndelay="2" time="Day"   entitygroup="ZombieSLPRActiveMix" />
+		<spawn maxcount="2" respawndelay="2" time="Night"   entitygroup="ZombieSLPRActiveMix" />-->
+		<spawn maxcount="1" respawndelay="4" time="Day" entitygroup="EnemyAnimalsForest"/>
+		<spawn maxcount="1" respawndelay="4" time="Night" entitygroup="EnemyAnimalsForest"/>
+		<spawn maxcount="1" respawndelay="7" time="Day" entitygroup="FriendlyAnimalsForest"/>
+		<spawn maxcount="1" respawndelay="7" time="Any" entitygroup="FriendlyAnimalsForest"/>
+		
+    </biome>
+	
+
+    <biome name="pine_forest">					<!--   spawns for pine_forest biome   -->
+	
+		<spawn maxcount="1" respawndelay="2" time="Day"   entitygroup="Ghouls" />
+		<spawn maxcount="3" respawndelay="1" time="Night"   entitygroup="Ghouls" />
+		
+		<spawn maxcount="1" respawndelay="2" time="Any"   entitygroup="ZombieLDRAndFeralLDR" />
+		
+		<spawn maxcount="1" respawndelay="4" time="Day" entitygroup="EnemyAnimalsForest"/>
+		<spawn maxcount="1" respawndelay="4" time="Night" entitygroup="EnemyAnimalsForest"/>
+		<spawn maxcount="1" respawndelay="7" time="Day" entitygroup="FriendlyAnimalsForest"/>
+		<spawn maxcount="1" respawndelay="7" time="Any" entitygroup="FriendlyAnimalsForest"/>
+		
+    </biome>
+	
+
+    <biome name="plains">						<!--	spawns for plains biome   -->
+	
+		<spawn maxcount="1" respawndelay="2" time="Day"   entitygroup="Ghouls" />
+		<spawn maxcount="3" respawndelay="1" time="Night"   entitygroup="Ghouls" />
+		
+		<spawn maxcount="1" respawndelay="2" time="Any"   entitygroup="ZombieLDRAndFeralLDR" />
+		
+		<spawn maxcount="1" respawndelay="4" time="Day" entitygroup="EnemyAnimalsPlains"/>
+		<spawn maxcount="1" respawndelay="4" time="Night" entitygroup="EnemyAnimalsPlains"/>
+		<spawn maxcount="1" respawndelay="7" time="Day" entitygroup="FriendlyAnimalsPlains"/>
+		<spawn maxcount="1" respawndelay="7" time="Any" entitygroup="FriendlyAnimalsPlains"/>
+		
+    </biome>
+	
+
+    <biome name="desert">						<!--	spawns for desert biome   -->
+	
+		<spawn maxcount="1" respawndelay="2" time="Day"   entitygroup="Ghouls" />
+		<spawn maxcount="3" respawndelay="1" time="Night"   entitygroup="Ghouls" />
+		
+		<spawn maxcount="1" respawndelay="2" time="Any"   entitygroup="ZombieLDRAndFeralLDR" />
+		
+		<spawn maxcount="1" respawndelay="4" time="Day" entitygroup="EnemyAnimalsDesert"/>
+		<spawn maxcount="1" respawndelay="4" time="Night" entitygroup="EnemyAnimalsDesert"/>
+		<spawn maxcount="1" respawndelay="10" time="Day" entitygroup="FriendlyAnimalsDesert"/>
+		<spawn maxcount="1" respawndelay="10" time="Any" entitygroup="FriendlyAnimalsDesert"/>
+		
+    </biome>
+	
+
+    <biome name="wasteland">					<!--   spawns for wasteland biome   -->
+	
+		<spawn maxcount="2" respawndelay="2" time="Day"   entitygroup="Ghouls" />
+		<spawn maxcount="3" respawndelay="1" time="Night"   entitygroup="Ghouls" />
+		
+		<spawn maxcount="1" respawndelay="2" time="Any"   entitygroup="ZombieLDRAndFeralLDR" />
+		
+        <spawn maxcount="1" respawndelay="4" time="Day"   entitygroup="EnemyAnimalsWasteland"/>
+		<spawn maxcount="1" respawndelay="4" time="Night"   entitygroup="EnemyAnimalsWasteland"/>
+		<spawn maxcount="1" respawndelay="14" time="Day"   entitygroup="FriendlyAnimalsWasteland"/>
+		<spawn maxcount="1" respawndelay="14" time="Any"   entitygroup="FriendlyAnimalsWasteland"/>
+		
+    </biome>
+	
+
+    <biome name="burnt_forest">					<!--   spawns for burnt_forest biome   -->
+	
+		<spawn maxcount="1" respawndelay="2" time="Day"   entitygroup="Ghouls" />
+		<spawn maxcount="3" respawndelay="1" time="Night"   entitygroup="Ghouls" />
+		
+		<spawn maxcount="1" respawndelay="2" time="Any"   entitygroup="ZombieBurnt" />
+		<spawn maxcount="1" respawndelay="3" time="Any"   entitygroup="ZombieLDRAndFeralLDR" />
+		
+		<spawn maxcount="1" respawndelay="7" time="Day"   entitygroup="EnemyAnimalsBurntForest"/>
+		<spawn maxcount="1" respawndelay="7" time="Night"   entitygroup="EnemyAnimalsBurntForest"/>
+		<spawn maxcount="1" respawndelay="7" time="Day"   entitygroup="FriendlyAnimalsBurntForest"/>
+		<spawn maxcount="1" respawndelay="7" time="Any"   entitygroup="FriendlyAnimalsBurntForest"/>
+		
+	</biome>
+	
+
+    <biome name="snow">							<!--   spawn for snow biome   -->
+	
+		<spawn maxcount="1" respawndelay="2" time="Day"   entitygroup="Ghouls" />
+		<spawn maxcount="3" respawndelay="1" time="Night"   entitygroup="Ghouls" />
+		
+		<spawn maxcount="1" respawndelay="1" time="Any" entitygroup="ZombieSnow" />
+		<spawn maxcount="1" respawndelay="2" time="Any"   entitygroup="ZombieLDRAndFeralLDR" />
+		
+		<spawn maxcount="1" respawndelay="7" time="Day" entitygroup="EnemyAnimalsSnow"/>
+		<spawn maxcount="1" respawndelay="7" time="Night" entitygroup="EnemyAnimalsSnow"/>
+		<spawn maxcount="1" respawndelay="7" time="Day" entitygroup="FriendlyAnimalsSnow"/>
+		<spawn maxcount="1" respawndelay="7" time="Any" entitygroup="FriendlyAnimalsSnow"/>
+		
+	</biome>
+	
+	
+	<biome name="water">						<!--   spawn for water biome   -->
+	
+		<spawn maxcount="2" respawndelay="2" time="Day"   entitygroup="Ghouls" />
+		<spawn maxcount="3" respawndelay="1" time="Night"   entitygroup="Ghouls" />
+		
+		<spawn maxcount="1" respawndelay="2" time="Any"   entitygroup="ZombieLDRAndFeralLDR" />
+		
+		<spawn maxcount="2" respawndelay="3" time="Day" entitygroup="EnemyAnimalsWater"/>
+		<spawn maxcount="2" respawndelay="3" time="Night" entitygroup="EnemyAnimalsWater"/>
+		<spawn maxcount="2" respawndelay="7" time="Day" entitygroup="FriendlyAnimalsWater"/>
+		<spawn maxcount="1" respawndelay="7" time="Any" entitygroup="FriendlyAnimalsWater"/>
+		
+    </biome>
+	
+	<entityspawner name="Scouts" dynamic="true" wrapMode="wrap">
+		<day value="*"><!--* means it is used when no day is specified -->
+			<property name="ResetToday"         value="true" />
+			<property name="EntityGroupName"    value="ZombieScouts" />
+			<property name="Time"               value="Any" />
+			<property name="DelayBetweenSpawns" value="1" />
+			<property name="TotalAlive"         value="1" />
+			<property name="TotalPerWave"       value="1" />
+		</day>
+		
+	</entityspawner>
+	
+</spawning>

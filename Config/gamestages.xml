@@ -1,0 +1,601 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+
+Game stage spawning: All game stage spawning starts with a "Spawner" which is a named object referenced in the code
+or other data (like POIs). The spawner itself contains all of the gamestage information for that particular spawner.
+Examples: BloodMoonHorde spawner, or a large POI spawn, or a POI spawn that contains football players.
+
+Each spawner defines a set of game stages. An individual game stage defines the actual spawning and spawning progression
+for that specific stage. The game stage number is an estimate of "difficulty", higher game stages should be harder than
+lower game stages.
+
+<spawner name="BloodMoonHorde">
+	<gamestage stage="1">
+
+		// Starting spawn stage is in this first entry.
+		// It will spawn up to 300 zombies, but only 8 can be alive at any one time due to performance reasons.
+		// Zombies will be spawned from the ZombiesNight spawn group defined in entitygroups.xml
+		// (Optional) The duration of this stage is 1 game hour, after that game hour the next spawn will start OR the spawning will complete
+		// if there are no more spawns.
+		// (Optional) Interval is a delay in seconds between the end of a spawn group and the next one
+		// If we have a use for it this could also trigger a stinger sound.
+
+		<spawn group="ZombiesNight" num="300" maxAlive ="8" duration="1" interval="60"/>
+
+		// After 300 zombies have been killed this defines a kind of "station keeping" mode
+		// where there will be one zombie sent to harass the players until sunrise.
+
+		<spawn group="ZombiesNight" num="9999999" maxAlive="1"/>
+			maxAlive is now per player, not per party
+	</gamestage>
+</spawner>
+
+The code will use the highest stage that is less than or equal to your computed stage.
+There is no cap on gamestage. If you feel like defining a stage="5000" - go nuts.
+
+The gamestage is calculated once, when the "event" occurs.
+When the blood moon rises the game considers nearby players as "a party" and figures out the accumulated gamestage.
+This gamestage will be in effect for the duration of the event.
+If players log in later or drop out, such as during the blood moon event, the gamestage will not change.
+
+- - - - - - -
+
+There is a metric which maps a player or group of players to a game stage number.
+
+
+daysSurvived : This is a running total, kept for every individual player, and low-capped at 0.
+				Every 24 hours GAME time 1 is added. On every death "daysAliveChangeWhenKilled" is subtracted from the total.
+
+gameStage = playerLevel + playerLevel * (daysSurvived  * daysAliveDifficultyBonus + gameDifficultyMultiplier )
+
+So if a player was level 10 and survived 4 days playing on the Nomad Difficulty when the game stage points are calculated the game stage points would be the sum of
+gameStage = (Player Level 10) + ((Player 10) X  (Days Survived 4 X .1 + Nomad Difficulty Multiplier .2))
+The total would be 10 + 10 x .6 or 16 game stage points
+
+Now this mainly shows how weight is applied when calculating the gameStage of a party of players:
+
+		gameStage = 0;
+		weight = startingWeight;
+		foreach (player in partySortedByPlayerLevel) {
+			gameStage += (player.level*(1+(player.daysAliveDifficultyBonus*0.1)+GlobalGameDifficultyBonus)*weight;
+			weight -= diminishingReturns;
+			if (weight <= 0f) {
+				break;
+			}
+		}
+
+- - - - - - -
+
+Which gameStage list of spawn groups is actually picked and "ran" if it calculates a GS of 15?
+
+It rounds down.
+
+At a GS of 15, the <gamestage stage="14"> is used.
+
+At a GS of 14, <gamestage stage="12"> is used.
+
+- - - - - - -
+
+There is a console command: forcegamestage
+	This will force a gamestage for testing.
+	The calculation will not run at all but you jump directly to the spawn set for this stage.
+-->
+
+<gamestages>
+	<config
+		startingWeight ="1"
+		scavengerGameDifficultyBonus="0"
+		adventurerGameDifficultyBonus="0.1"
+		nomadGameDifficultyBonus="0.2"
+		warriorGameDifficultyBonus="0.6"
+		survivalistGameDifficultyBonus="1.0"
+		insaneGameDifficultyBonus="1.5"
+		daysAliveDifficultyBonus="0.1"
+		daysAliveChangeWhenKilled ="2"
+		diminishingReturns ="0.2"
+	/>
+	<spawner name="WanderingHorde"> <!-- These will wrap around at 50. -->
+		<!-- Will probably have to undo that later. Rev 19924 /19944 -->
+		<gamestage stage="01"><spawn group="WanderAnimals" num="1" interval="15"/><spawn group="WanderAnimals" num="2" interval="5"/><spawn group="WanderAnimals" num="1" interval="10"/></gamestage>
+		<gamestage stage="02"><spawn group="WanderAnimals" num="1" maxAlive="1" interval="10"/><spawn group="WanderAnimals" num="3" maxAlive="3" interval="1"/></gamestage>
+		<gamestage stage="03"><spawn group="WanderAnimals" num="1" maxAlive="1" interval="10"/><spawn group="WanderAnimals" num="3" maxAlive="3" interval="1"/></gamestage>
+		<gamestage stage="04"><spawn group="WanderAnimals" num="1" maxAlive="1" interval="10"/><spawn group="WanderAnimals" num="3" maxAlive="3" interval="1"/></gamestage>
+		<gamestage stage="05"><spawn group="WanderAnimals" num="1" maxAlive="1" interval="10"/><spawn group="WanderAnimals" num="3" maxAlive="3" interval="1"/></gamestage>
+		<gamestage stage="06"><spawn group="WanderAnimals" num="1" maxAlive="1" interval="10"/><spawn group="WanderAnimals" num="3" maxAlive="3" interval="1"/></gamestage>
+		<gamestage stage="07"><spawn group="WanderAnimals" num="1" maxAlive="1" interval="10"/><spawn group="WanderAnimals" num="3" maxAlive="3" interval="1"/></gamestage>
+		<gamestage stage="08"><spawn group="WanderAnimals" num="1" maxAlive="1" interval="10"/><spawn group="WanderAnimals" num="3" maxAlive="3" interval="1"/></gamestage>
+		<gamestage stage="09"><spawn group="WanderAnimals" num="1" maxAlive="1" interval="10"/><spawn group="WanderAnimals" num="3" maxAlive="3" interval="1"/></gamestage>
+		<gamestage stage="10"><spawn group="WanderAnimals" num="1" maxAlive="1" interval="10"/><spawn group="ZombieFullActiveMix" num="2" maxAlive="2" interval="10"/><spawn group="ZombieFullActiveMix" num="1" maxAlive="1" interval="10"/></gamestage>
+		<gamestage stage="11"><spawn group="WanderAnimals" num="1" maxAlive="1" interval="10"/><spawn group="WanderAnimals" num="3" maxAlive="3" interval="1"/></gamestage>
+		<gamestage stage="12"><spawn group="WanderAnimals" num="1" maxAlive="1" interval="10"/><spawn group="WanderAnimals" num="3" maxAlive="3" interval="1"/></gamestage>
+		<gamestage stage="13"><spawn group="WanderAnimals" num="1" maxAlive="1" interval="10"/><spawn group="WanderAnimals" num="3" maxAlive="3" interval="1"/></gamestage>
+		<gamestage stage="14"><spawn group="WanderAnimals" num="1" maxAlive="1" interval="10"/><spawn group="WanderAnimals" num="3" maxAlive="3" interval="1"/></gamestage>
+		<gamestage stage="15"><spawn group="WanderAnimals" num="1" maxAlive="1" interval="10"/><spawn group="WanderAnimals" num="3" maxAlive="3" interval="1"/><spawn group="ZombieFullActiveMix" num="1" maxAlive="1" interval="10"/></gamestage>
+		<gamestage stage="16"><spawn group="WanderAnimals" num="1" maxAlive="1" interval="10"/><spawn group="WanderAnimals" num="3" maxAlive="3" interval="1"/></gamestage>
+		<gamestage stage="17"><spawn group="WanderAnimals" num="1" maxAlive="1" interval="10"/><spawn group="WanderAnimals" num="3" maxAlive="3" interval="1"/></gamestage>
+		<gamestage stage="18"><spawn group="WanderAnimals" num="1" maxAlive="1" interval="10"/><spawn group="WanderAnimals" num="3" maxAlive="3" interval="1"/></gamestage>
+		<gamestage stage="19"><spawn group="WanderAnimals" num="1" maxAlive="1" interval="10"/><spawn group="WanderAnimals" num="3" maxAlive="3" interval="1"/></gamestage>
+		<gamestage stage="20"><spawn group="WanderAnimals" num="1" maxAlive="1" interval="10"/><spawn group="ZombieFullActiveMix" num="1" maxAlive="1" interval="10"/><spawn group="ZombieFullActiveMix" num="3" maxAlive="3" interval="10"/></gamestage>
+		<gamestage stage="21"><spawn group="WanderAnimals" num="1" maxAlive="1" interval="10"/><spawn group="WanderAnimals" num="3" maxAlive="3" interval="1"/></gamestage>
+		<gamestage stage="22"><spawn group="WanderAnimals" num="1" maxAlive="1" interval="10"/><spawn group="WanderAnimals" num="3" maxAlive="3" interval="1"/></gamestage>
+		<gamestage stage="23"><spawn group="WanderAnimals" num="1" maxAlive="1" interval="10"/><spawn group="WanderAnimals" num="3" maxAlive="3" interval="1"/></gamestage>
+		<gamestage stage="24"><spawn group="WanderAnimals" num="1" maxAlive="1" interval="10"/><spawn group="WanderAnimals" num="3" maxAlive="3" interval="1"/></gamestage>
+		<gamestage stage="25"><spawn group="WanderAnimals" num="1" maxAlive="1" interval="10"/><spawn group="WanderAnimals" num="3" maxAlive="3" interval="1"/><spawn group="ZombieFullActiveMix" num="2" maxAlive="2" interval="10"/></gamestage>
+		<gamestage stage="26"><spawn group="WanderAnimals" num="1" maxAlive="1" interval="10"/><spawn group="WanderAnimals" num="3" maxAlive="3" interval="1"/></gamestage>
+		<gamestage stage="27"><spawn group="WanderAnimals" num="1" maxAlive="1" interval="10"/><spawn group="WanderAnimals" num="3" maxAlive="3" interval="1"/></gamestage>
+		<gamestage stage="28"><spawn group="WanderAnimals" num="1" maxAlive="1" interval="10"/><spawn group="WanderAnimals" num="3" maxAlive="3" interval="1"/></gamestage>
+		<gamestage stage="29"><spawn group="WanderAnimals" num="1" maxAlive="1" interval="10"/><spawn group="WanderAnimals" num="3" maxAlive="3" interval="1"/></gamestage>
+		<gamestage stage="30"><spawn group="WanderAnimals" num="1" maxAlive="1" interval="10"/><spawn group="ZombieFullActiveMix" num="2" maxAlive="2" interval="10"/><spawn group="ZombieFullActiveMix" num="2" maxAlive="2" interval="10"/></gamestage>
+		<gamestage stage="31"><spawn group="WanderAnimals" num="1" maxAlive="1" interval="10"/><spawn group="WanderAnimals" num="3" maxAlive="3" interval="1"/></gamestage>
+		<gamestage stage="32"><spawn group="WanderAnimals" num="1" maxAlive="1" interval="10"/><spawn group="WanderAnimals" num="3" maxAlive="3" interval="1"/></gamestage>
+		<gamestage stage="33"><spawn group="WanderAnimals" num="1" maxAlive="1" interval="10"/><spawn group="WanderAnimals" num="3" maxAlive="3" interval="1"/></gamestage>
+		<gamestage stage="34"><spawn group="WanderAnimals" num="1" maxAlive="1" interval="10"/><spawn group="WanderAnimals" num="3" maxAlive="3" interval="1"/></gamestage>
+		<gamestage stage="35"><spawn group="WanderAnimals" num="1" maxAlive="1" interval="10"/><spawn group="WanderAnimals" num="3" maxAlive="3" interval="1"/><spawn group="ZombieFullActiveMix" num="1" maxAlive="1" interval="10"/></gamestage>
+		<gamestage stage="36"><spawn group="WanderAnimals" num="1" maxAlive="1" interval="10"/><spawn group="WanderAnimals" num="3" maxAlive="3" interval="1"/></gamestage>
+		<gamestage stage="37"><spawn group="WanderAnimals" num="1" maxAlive="1" interval="10"/><spawn group="WanderAnimals" num="3" maxAlive="3" interval="1"/></gamestage>
+		<gamestage stage="38"><spawn group="WanderAnimals" num="1" maxAlive="1" interval="10"/><spawn group="WanderAnimals" num="3" maxAlive="3" interval="1"/></gamestage>
+		<gamestage stage="39"><spawn group="WanderAnimals" num="1" maxAlive="1" interval="10"/><spawn group="WanderAnimals" num="3" maxAlive="3" interval="1"/></gamestage>
+		<gamestage stage="40"><spawn group="WanderAnimals" num="1" maxAlive="1" interval="10"/><spawn group="ZombieFullActiveMix" num="1" maxAlive="1" interval="10"/><spawn group="ZombieFullActiveMix" num="3" maxAlive="3" interval="10"/></gamestage>
+		<gamestage stage="41"><spawn group="WanderAnimals" num="1" maxAlive="1" interval="10"/><spawn group="WanderAnimals" num="3" maxAlive="3" interval="1"/></gamestage>
+		<gamestage stage="42"><spawn group="WanderAnimals" num="1" maxAlive="1" interval="10"/><spawn group="WanderAnimals" num="3" maxAlive="3" interval="1"/></gamestage>
+		<gamestage stage="43"><spawn group="WanderAnimals" num="1" maxAlive="1" interval="10"/><spawn group="WanderAnimals" num="3" maxAlive="3" interval="1"/></gamestage>
+		<gamestage stage="44"><spawn group="WanderAnimals" num="1" maxAlive="1" interval="10"/><spawn group="WanderAnimals" num="3" maxAlive="3" interval="1"/></gamestage>
+		<gamestage stage="45"><spawn group="WanderAnimals" num="1" maxAlive="1" interval="10"/><spawn group="WanderAnimals" num="3" maxAlive="3" interval="1"/><spawn group="ZombieFullActiveMix" num="2" maxAlive="2" interval="10"/></gamestage>
+		<gamestage stage="46"><spawn group="WanderAnimals" num="1" maxAlive="1" interval="10"/><spawn group="WanderAnimals" num="3" maxAlive="3" interval="1"/></gamestage>
+		<gamestage stage="46"><spawn group="WanderAnimals" num="1" maxAlive="1" interval="10"/><spawn group="WanderAnimals" num="3" maxAlive="3" interval="1"/></gamestage>
+		<gamestage stage="48"><spawn group="WanderAnimals" num="1" maxAlive="1" interval="10"/><spawn group="WanderAnimals" num="3" maxAlive="3" interval="1"/></gamestage>
+		<gamestage stage="49"><spawn group="WanderAnimals" num="1" maxAlive="1" interval="10"/><spawn group="WanderAnimals" num="3" maxAlive="3" interval="1"/></gamestage>
+		<gamestage stage="50"><spawn group="WanderAnimals" num="1" maxAlive="1" interval="10"/><spawn group="ZombieFullActiveMix" num="2" maxAlive="2" interval="10"/></gamestage>-->
+		
+		
+		<!--<gamestage stage="01"><spawn group="vultureScout" num="1" maxAlive="1" interval="70"/><spawn group="ZombieFullActiveMix" num="1" maxAlive="1" interval="40"/><spawn group="ZombieFullActiveMix" num="2" maxAlive="2" interval="40"/><spawn group="ZombieFullActiveMix" num="3" maxAlive="3"/></gamestage>
+		<gamestage stage="02"><spawn group="vultureScout" num="1" maxAlive="1" interval="70"/><spawn group="ZombieFullActiveMix" num="1" maxAlive="1" interval="40"/><spawn group="ZombieFullActiveMix" num="2" maxAlive="2" interval="40"/><spawn group="ZombieFullActiveMix" num="3" maxAlive="3"/></gamestage>
+		<gamestage stage="03"><spawn group="vultureScout" num="1" maxAlive="1" interval="70"/><spawn group="ZombieFullActiveMix" num="1" maxAlive="1" interval="40"/><spawn group="ZombieFullActiveMix" num="2" maxAlive="2" interval="40"/><spawn group="ZombieFullActiveMix" num="3" maxAlive="3"/></gamestage>
+		<gamestage stage="04"><spawn group="vultureScout" num="1" maxAlive="1" interval="70"/><spawn group="ZombieFullActiveMix" num="1" maxAlive="1" interval="40"/><spawn group="ZombieFullActiveMix" num="2" maxAlive="2" interval="40"/><spawn group="ZombieFullActiveMix" num="3" maxAlive="3"/></gamestage>
+		<gamestage stage="05"><spawn group="vultureScout" num="1" maxAlive="1" interval="70"/><spawn group="ZombieFullActiveMix" num="1" maxAlive="1" interval="40"/><spawn group="ZombieFullActiveMix" num="2" maxAlive="2" interval="40"/><spawn group="ZombieFullActiveMix" num="3" maxAlive="3"/></gamestage>
+		<gamestage stage="06"><spawn group="vultureScout" num="1" maxAlive="1" interval="70"/><spawn group="ZombieFullActiveMix" num="1" maxAlive="1" interval="40"/><spawn group="ZombieFullActiveMix" num="2" maxAlive="2" interval="40"/><spawn group="ZombieFullActiveMix" num="3" maxAlive="3"/></gamestage>
+		<gamestage stage="07"><spawn group="vultureScout" num="1" maxAlive="1" interval="70"/><spawn group="ZombieFullActiveMix" num="1" maxAlive="1" interval="40"/><spawn group="ZombieFullActiveMix" num="2" maxAlive="2" interval="40"/><spawn group="ZombieFullActiveMix" num="3" maxAlive="3"/></gamestage>
+		<gamestage stage="08"><spawn group="ZombieDogGroup" num="1" maxAlive="1"/></gamestage>
+		<gamestage stage="09"><spawn group="vultureScout" num="1" maxAlive="1" interval="70"/><spawn group="ZombieFullActiveMix" num="1" maxAlive="1" interval="40"/><spawn group="ZombieFullActiveMix" num="2" maxAlive="2" interval="40"/><spawn group="ZombieFullActiveMix" num="3" maxAlive="3"/></gamestage>
+		<gamestage stage="10"><spawn group="vultureScout" num="1" maxAlive="1" interval="70"/><spawn group="ZombieFullActiveMix" num="1" maxAlive="1" interval="40"/><spawn group="ZombieFullActiveMix" num="2" maxAlive="2" interval="40"/><spawn group="ZombieFullActiveMix" num="3" maxAlive="3"/></gamestage>
+		<gamestage stage="11"><spawn group="vultureScout" num="1" maxAlive="1" interval="70"/><spawn group="ZombieFullActiveMix" num="2" maxAlive="2" interval="40"/><spawn group="ZombieFullActiveMix" num="3" maxAlive="3" interval="40"/><spawn group="ZombieFullActiveMix" num="1" maxAlive="1"/></gamestage>
+		<gamestage stage="12"><spawn group="WolfGroup" num="2" maxAlive="2" interval="40"/>/></gamestage>
+		<gamestage stage="13"><spawn group="vultureScout" num="1" maxAlive="1" interval="70"/><spawn group="ZombieFullActiveMix" num="2" maxAlive="2" interval="40"/><spawn group="ZombieFullActiveMix" num="3" maxAlive="3" interval="40"/><spawn group="ZombieFullActiveMix" num="1" maxAlive="1"/></gamestage>
+		<gamestage stage="14"><spawn group="vultureScout" num="1" maxAlive="1" interval="70"/><spawn group="ZombieFullActiveMix" num="2" maxAlive="2" interval="40"/><spawn group="ZombieFullActiveMix" num="3" maxAlive="3" interval="40"/><spawn group="ZombieFullActiveMix" num="1" maxAlive="1"/></gamestage>
+		<gamestage stage="15"><spawn group="vultureScout" num="1" maxAlive="1" interval="70"/><spawn group="ZombieFullActiveMix" num="2" maxAlive="2" interval="40"/><spawn group="ZombieFullActiveMix" num="3" maxAlive="3" interval="40"/><spawn group="ZombieFullActiveMix" num="1" maxAlive="1"/></gamestage>
+		<gamestage stage="16"><spawn group="vultureScout" num="1" maxAlive="1" interval="70"/><spawn group="ZombieFullActiveMix" num="2" maxAlive="2" interval="40"/><spawn group="ZombieFullActiveMix" num="3" maxAlive="3" interval="40"/><spawn group="ZombieFullActiveMix" num="1" maxAlive="1"/></gamestage>
+		<gamestage stage="17"><spawn group="vultureScout" num="1" maxAlive="1" interval="70"/><spawn group="ZombieFullActiveMix" num="2" maxAlive="2" interval="40"/><spawn group="ZombieFullActiveMix" num="3" maxAlive="3" interval="40"/><spawn group="ZombieFullActiveMix" num="1" maxAlive="1"/></gamestage>
+		<gamestage stage="18"><spawn group="vultureScout" num="1" maxAlive="1" interval="70"/><spawn group="ZombieFullActiveMix" num="2" maxAlive="2" interval="40"/><spawn group="ZombieFullActiveMix" num="3" maxAlive="3" interval="40"/><spawn group="ZombieFullActiveMix" num="1" maxAlive="1"/></gamestage>
+		<gamestage stage="19"><spawn group="vultureScout" num="1" maxAlive="1" interval="70"/><spawn group="ZombieFullActiveMix" num="2" maxAlive="2" interval="40"/><spawn group="ZombieFullActiveMix" num="3" maxAlive="3" interval="40"/><spawn group="ZombieFullActiveMix" num="1" maxAlive="1"/></gamestage>
+		<gamestage stage="20"><spawn group="ZombieDogGroup" num="3" maxAlive="3" interval="40"/>/></gamestage>
+		<gamestage stage="21"><spawn group="vultureScout" num="1" maxAlive="1" interval="70"/><spawn group="ZombieFullActiveMix" num="3" maxAlive="3" interval="40"/><spawn group="ZombieFullActiveMix" num="1" maxAlive="1" interval="40"/><spawn group="ZombieFullActiveMix" num="2" maxAlive="2"/></gamestage>
+		<gamestage stage="22"><spawn group="vultureScout" num="1" maxAlive="1" interval="70"/><spawn group="ZombieFullActiveMix" num="3" maxAlive="3" interval="40"/><spawn group="ZombieFullActiveMix" num="1" maxAlive="1" interval="40"/><spawn group="ZombieFullActiveMix" num="2" maxAlive="2"/></gamestage>
+		<gamestage stage="23"><spawn group="vultureScout" num="1" maxAlive="1" interval="70"/><spawn group="ZombieFullActiveMix" num="3" maxAlive="3" interval="40"/><spawn group="ZombieFullActiveMix" num="1" maxAlive="1" interval="40"/><spawn group="ZombieFullActiveMix" num="2" maxAlive="2"/></gamestage>
+		<gamestage stage="24"><spawn group="vultureScout" num="1" maxAlive="1" interval="70"/><spawn group="ZombieFullActiveMix" num="3" maxAlive="3" interval="40"/><spawn group="ZombieFullActiveMix" num="1" maxAlive="1" interval="40"/><spawn group="ZombieFullActiveMix" num="2" maxAlive="2"/></gamestage>
+		<gamestage stage="25"><spawn group="vultureScout" num="1" maxAlive="1" interval="70"/><spawn group="ZombieFullActiveMix" num="3" maxAlive="3" interval="40"/><spawn group="ZombieFullActiveMix" num="1" maxAlive="1" interval="40"/><spawn group="ZombieFullActiveMix" num="2" maxAlive="2"/></gamestage>
+		<gamestage stage="26"><spawn group="vultureScout" num="1" maxAlive="1" interval="70"/><spawn group="ZombieFullActiveMix" num="3" maxAlive="3" interval="40"/><spawn group="ZombieFullActiveMix" num="1" maxAlive="1" interval="40"/><spawn group="ZombieFullActiveMix" num="2" maxAlive="2"/></gamestage>
+		<gamestage stage="27"><spawn group="VultureGroup" num="10" maxAlive="10" interval="2"/>/></gamestage>
+		<gamestage stage="28"><spawn group="vultureScout" num="1" maxAlive="1" interval="70"/><spawn group="ZombieFullActiveMix" num="3" maxAlive="3" interval="40"/><spawn group="ZombieFullActiveMix" num="1" maxAlive="1" interval="40"/><spawn group="ZombieFullActiveMix" num="2" maxAlive="2"/></gamestage>
+		<gamestage stage="29"><spawn group="vultureScout" num="1" maxAlive="1" interval="70"/><spawn group="ZombieFullActiveMix" num="3" maxAlive="3" interval="40"/><spawn group="ZombieFullActiveMix" num="1" maxAlive="1" interval="40"/><spawn group="ZombieFullActiveMix" num="2" maxAlive="2"/></gamestage>
+		<gamestage stage="30"><spawn group="vultureScout" num="1" maxAlive="1" interval="70"/><spawn group="ZombieFullActiveMix" num="3" maxAlive="3" interval="40"/><spawn group="ZombieFullActiveMix" num="1" maxAlive="1" interval="40"/><spawn group="ZombieFullActiveMix" num="2" maxAlive="2"/></gamestage>
+		<gamestage stage="31"><spawn group="vultureScout" num="1" maxAlive="1" interval="70"/><spawn group="ZombieFullActiveMix" num="1" maxAlive="1" interval="40"/><spawn group="ZombieFullActiveMix" num="2" maxAlive="2" interval="40"/><spawn group="ZombieFullActiveMix" num="3" maxAlive="3"/></gamestage>
+		<gamestage stage="32"><spawn group="vultureScout" num="1" maxAlive="1" interval="70"/><spawn group="ZombieFullActiveMix" num="1" maxAlive="1" interval="40"/><spawn group="ZombieFullActiveMix" num="2" maxAlive="2" interval="40"/><spawn group="ZombieFullActiveMix" num="3" maxAlive="3"/></gamestage>
+		<gamestage stage="33"><spawn group="vultureScout" num="1" maxAlive="1" interval="70"/><spawn group="ZombieFullActiveMix" num="1" maxAlive="1" interval="40"/><spawn group="ZombieFullActiveMix" num="2" maxAlive="2" interval="40"/><spawn group="ZombieFullActiveMix" num="3" maxAlive="3"/></gamestage>
+		<gamestage stage="34"><spawn group="ZombieDogGroup" num="3" maxAlive="3" interval="40"/>/></gamestage>
+		<gamestage stage="35"><spawn group="vultureScout" num="1" maxAlive="1" interval="70"/><spawn group="ZombieFullActiveMix" num="1" maxAlive="1" interval="40"/><spawn group="ZombieFullActiveMix" num="2" maxAlive="2" interval="40"/><spawn group="ZombieFullActiveMix" num="3" maxAlive="3"/></gamestage>
+		<gamestage stage="36"><spawn group="vultureScout" num="1" maxAlive="1" interval="70"/><spawn group="ZombieFullActiveMix" num="1" maxAlive="1" interval="40"/><spawn group="ZombieFullActiveMix" num="2" maxAlive="2" interval="40"/><spawn group="ZombieFullActiveMix" num="3" maxAlive="3"/></gamestage>
+		<gamestage stage="37"><spawn group="vultureScout" num="1" maxAlive="1" interval="70"/><spawn group="ZombieFullActiveMix" num="1" maxAlive="1" interval="40"/><spawn group="ZombieFullActiveMix" num="2" maxAlive="2" interval="40"/><spawn group="ZombieFullActiveMix" num="3" maxAlive="3"/></gamestage>
+		<gamestage stage="38"><spawn group="ZombieAnimalsGroup" num="5" maxAlive="5" interval="40"/>/></gamestage>
+		<gamestage stage="39"><spawn group="vultureScout" num="1" maxAlive="1" interval="70"/><spawn group="ZombieFullActiveMix" num="1" maxAlive="1" interval="40"/><spawn group="ZombieFullActiveMix" num="2" maxAlive="2" interval="40"/><spawn group="ZombieFullActiveMix" num="3" maxAlive="3"/></gamestage>
+		<gamestage stage="40"><spawn group="vultureScout" num="1" maxAlive="1" interval="70"/><spawn group="ZombieFullActiveMix" num="1" maxAlive="1" interval="40"/><spawn group="ZombieFullActiveMix" num="2" maxAlive="2" interval="40"/><spawn group="ZombieFullActiveMix" num="3" maxAlive="3"/></gamestage>
+		<gamestage stage="41"><spawn group="WolfPack" num="3" maxAlive="3" interval="40"/></gamestage>
+		<gamestage stage="42"><spawn group="vultureScout" num="1" maxAlive="1" interval="70"/><spawn group="ZombieFullActiveMix" num="2" maxAlive="2" interval="40"/><spawn group="ZombieFullActiveMix" num="3" maxAlive="3" interval="40"/><spawn group="ZombieFullActiveMix" num="1" maxAlive="1"/></gamestage>
+		<gamestage stage="43"><spawn group="vultureScout" num="1" maxAlive="1" interval="70"/><spawn group="ZombieFullActiveMix" num="2" maxAlive="2" interval="40"/><spawn group="ZombieFullActiveMix" num="3" maxAlive="3" interval="40"/><spawn group="ZombieFullActiveMix" num="1" maxAlive="1"/></gamestage>
+		<gamestage stage="44"><spawn group="vultureScout" num="1" maxAlive="1" interval="70"/><spawn group="ZombieSoldierGroup" num="5" maxAlive="5"/></gamestage>
+		<gamestage stage="45"><spawn group="vultureScout" num="1" maxAlive="1" interval="70"/><spawn group="ZombieFullActiveMix" num="2" maxAlive="2" interval="40"/><spawn group="ZombieFullActiveMix" num="3" maxAlive="3" interval="40"/><spawn group="ZombieFullActiveMix" num="1" maxAlive="1"/></gamestage>
+		<gamestage stage="46"><spawn group="vultureScout" num="1" maxAlive="1" interval="70"/><spawn group="ZombieFullActiveMix" num="2" maxAlive="2" interval="40"/><spawn group="ZombieFullActiveMix" num="3" maxAlive="3" interval="40"/><spawn group="ZombieFullActiveMix" num="1" maxAlive="1"/></gamestage>
+		<gamestage stage="47"><spawn group="VultureGroup" num="15" maxAlive="15" interval="2"/></gamestage>
+		<gamestage stage="48"><spawn group="vultureScout" num="1" maxAlive="1" interval="70"/><spawn group="ZombieFullActiveMix" num="2" maxAlive="2" interval="40"/><spawn group="ZombieFullActiveMix" num="3" maxAlive="3" interval="40"/><spawn group="ZombieFullActiveMix" num="1" maxAlive="1"/></gamestage>
+		<gamestage stage="49"><spawn group="vultureScout" num="1" maxAlive="1" interval="70"/><spawn group="ZombieFullActiveMix" num="2" maxAlive="2" interval="40"/><spawn group="ZombieFullActiveMix" num="3" maxAlive="3" interval="40"/><spawn group="ZombieFullActiveMix" num="1" maxAlive="1"/></gamestage>
+		<gamestage stage="50"><spawn group="ZombieBearsGroup" num="2" maxAlive="2" interval="30"/></gamestage>-->
+	</spawner>
+
+	<!-- <group name="S_Default_XS" emptyChance="0.5" decoyChance="0.2" decoy1hpChance="0.5">
+
+	1. emptyChance:	the chance of the entire sleeper VOLUME having no zombies
+	2. count:			after emptyChance has been checked, the total number of SLEEPERS spawned is determined by the count
+	3. decoyChance:	determines how many OF the spawned sleepers will be DECOYS
+	4. decoy1hpChance:	determines how many OF the spawned decoys will be ONE HIT POINT DECOYS
+
+	Full hit point decoys:	Will never wake up due to sight/sound events. Will wake up if attacked.
+	1 HP decoys:			Will never wake up due to sight/sound events. Will die instantly if attacked.
+
+	The gamestage for a specific sleeper volume can be adjusted up/down in the volume settings, not here.
+	-->
+
+	<difficultyModifier name="easy" amount="150"/>
+	<difficultyModifier name="medium" amount="300"/>
+	<difficultyModifier name="hard" amount="500"/>
+
+	<!-- Lootroom: ExtraSmall 1-2, Small 3-4, Medium 5-7, Large 6-9, ExtraLarge 8-11 -->
+	<group name="S_LootRoom_XS" emptyChance="0">
+		<spawner name="SleeperGSList" count="2,4"/>
+	</group>
+	<group name="S_LootRoom_S" emptyChance="0">
+		<spawner name="SleeperGSList" count="4,6"/>
+	</group>
+	<group name="S_LootRoom_Med" emptyChance="0">
+		<spawner name="SleeperGSList" count="6,8"/>
+	</group>
+	<group name="S_LootRoom_L" emptyChance="0">
+		<spawner name="SleeperGSList" count="8,10"/>
+	</group>
+	<group name="S_LootRoom_XL" emptyChance="0">
+		<spawner name="SleeperGSList" count="10,12"/>
+	</group>
+
+	<!-- Default: ExtraSmall 1-2, Small 2-4, Medium 3-7, Large 4-9, ExtraLarge 5-11 -->
+	<group name="S_Default_XS" emptyChance="0.1" decoyChance="0.1" decoy1hpChance="0"> <!-- XS -->
+		<spawner name="SleeperGSList" count="3,5"/>
+	</group>
+	<group name="S_Default_S" emptyChance="0.1" decoyChance="0.1" decoy1hpChance="0"> <!-- S -->
+		<spawner name="SleeperGSList" count="4,7"/>
+	</group>
+	<group name="S_Default_Med" emptyChance="0.1" decoyChance="0.1" decoy1hpChance="0"> <!-- M -->
+		<spawner name="SleeperGSList" count="5,8"/>
+	</group>
+	<group name="S_Default_L" emptyChance="0.05" decoyChance="0.1" decoy1hpChance="0"> <!-- L -->
+		<spawner name="SleeperGSList" count="6,9"/>
+	</group>
+	<group name="S_Default_XL" emptyChance="0.01" decoyChance="0.05" decoy1hpChance="0"> <!-- XL -->
+		<spawner name="SleeperGSList" count="7,10"/>
+	</group>
+
+	<group name="S_AbandonedHouse_1" emptyChance="0.1" decoyChance="0.1" decoy1hpChance="0">
+		<spawner name="SleeperGSList" count="2,5"/>
+	</group>
+
+	<group name="S_ZombieDogs_S" emptyChance="0.20" decoyChance="0.2" decoy1hpChance="0.75"> <!-- S -->
+		<spawner name="ZombieDogHorde" count="2,4"/>
+	</group>
+	<group name="S_ZombieDogs_Med" emptyChance="0.1" decoyChance="0.2" decoy1hpChance="0.75"> <!-- M -->
+		<spawner name="ZombieDogHorde" count="3,7"/>
+	</group>
+	<group name="S_ZombieDogs_L" emptyChance="0.1" decoyChance="0.2" decoy1hpChance="0.75"> <!-- L -->
+		<spawner name="ZombieDogHorde" count="4,9"/>
+	</group>
+
+	<group name="S_SnowZombies_Med" emptyChance="0.1" decoyChance="0.2" decoy1hpChance="0.75"> <!-- M -->
+		<spawner name="SleeperGSList" count="3,7"/>
+	</group>
+
+	<group name="S_FeralZombies_S" emptyChance="0.20" decoyChance="0.2" decoy1hpChance="0.75"> <!-- S -->
+		<spawner name="SleeperGSList" count="2,4"/>
+	</group>
+
+	<group name="S_BikerBar_Med" emptyChance="0.1" decoyChance="0.2" decoy1hpChance="0.75"> <!-- M -->
+		<spawner name="SleeperGSList" count="3,7"/>
+	</group>
+
+	<group name="S_BikerBar_L" emptyChance="0.1" decoyChance="0.2" decoy1hpChance="0.75"> <!-- L -->
+		<spawner name="SleeperGSList" count="4,9"/>
+	</group>
+
+	<group name="S_FootballStadium_Med" emptyChance="0.1" decoyChance="0.1" decoy1hpChance="0"> <!-- M -->
+		<spawner name="SleeperGSList" count="4,8"/>
+	</group>
+	<group name="S_FootballStadium_L" emptyChance="0.1" decoyChance="0.1" decoy1hpChance="0"> <!-- L -->
+		<spawner name="SleeperGSList" count="5,10"/>
+	</group>
+
+	<group name="S_GhostTown_S" emptyChance="0.20" decoyChance="0.2" decoy1hpChance="0.75"> <!-- S -->
+		<spawner name="SleeperGSList" count="2,4"/>
+	</group>
+	<group name="S_GhostTown_Med" emptyChance="0.1" decoyChance="0.2" decoy1hpChance="0.75"> <!-- M -->
+		<spawner name="SleeperGSList" count="3,7"/>
+	</group>
+
+	<group name="S_ZomSoldier_S" emptyChance="0.1" decoyChance="0.1" decoy1hpChance="0"> <!-- S -->
+		<spawner name="SleeperGSList" count="2,4"/>
+	</group>
+	<group name="S_ZomSoldier_Med" emptyChance="0.1" decoyChance="0.1" decoy1hpChance="0"> <!-- M -->
+		<spawner name="SleeperGSList" count="4,8"/>
+	</group>
+	<group name="S_ZomSoldier_L" emptyChance="0.1" decoyChance="0.1" decoy1hpChance="0"> <!-- L -->
+		<spawner name="SleeperGSList" count="5,10"/>
+	</group>
+
+	<group name="S_ZomUtilityWorker_S" emptyChance="0.20" decoyChance="0.2" decoy1hpChance="0.75"> <!-- S -->
+		<spawner name="SleeperGSList" count="2,4"/>
+	</group>
+	<group name="S_ZomUtilityWorker_Med" emptyChance="0.1" decoyChance="0.2" decoy1hpChance="0.75"> <!-- M -->
+		<spawner name="SleeperGSList" count="3,7"/>
+	</group>
+	<group name="S_ZomUtilityWorker_L" emptyChance="0.1" decoyChance="0.2" decoy1hpChance="0.75"> <!-- L -->
+		<spawner name="SleeperGSList" count="4,9"/>
+	</group>
+
+	<group name="S_BusinessMan_XS" emptyChance="0.25" decoyChance="0.2" decoy1hpChance="0.75"> <!-- XS -->
+		<spawner name="SleeperGSList" count="1,2"/>
+	</group>
+	<group name="S_BusinessMan_S" emptyChance="0.20" decoyChance="0.2" decoy1hpChance="0.75"> <!-- S -->
+		<spawner name="SleeperGSList" count="2,4"/>
+	</group>
+	<group name="S_BusinessMan_Med" emptyChance="0.1" decoyChance="0.2" decoy1hpChance="0.75"> <!-- M -->
+		<spawner name="SleeperGSList" count="3,7"/>
+	</group>
+	<group name="S_BusinessMan_L" emptyChance="0.1" decoyChance="0.2" decoy1hpChance="0.75"> <!-- L -->
+		<spawner name="SleeperGSList" count="4,9"/>
+	</group>
+
+	<group name="S_Badass_XS" emptyChance="0.25" decoyChance="0.2" decoy1hpChance="0.75"> <!-- XS -->
+		<spawner name="SleeperGSList" count="1,2"/>
+	</group>
+	<group name="S_Badass_S" emptyChance="0.20" decoyChance="0.2" decoy1hpChance="0.75"> <!-- S -->
+		<spawner name="SleeperGSList" count="2,4"/>
+	</group>
+	<group name="S_Badass_Med" emptyChance="0.1" decoyChance="0.2" decoy1hpChance="0.75"> <!-- M -->
+		<spawner name="SleeperGSList" count="3,7"/>
+	</group>
+	<group name="S_Badass_L" emptyChance="0.1" decoyChance="0.2" decoy1hpChance="0.75"> <!-- L -->
+		<spawner name="SleeperGSList" count="4,9"/>
+	</group>
+	<group name="S_Badass_XL" emptyChance="0.07" decoyChance="0.2" decoy1hpChance="0.75"> <!-- XL -->
+		<spawner name="SleeperGSList" count="5,11"/>
+	</group>
+
+	<group name="S_TestChamberDecoy_XS" emptyChance="0.20" decoyChance="1.0" decoy1hpChance="0.2"> <!-- XS -->
+		<spawner name="SleeperTestChamberGSList" count="1,2"/>
+	</group>
+	<group name="S_TestChamberDecoy_S" emptyChance="0.15" decoyChance="1.0" decoy1hpChance="0.2"> <!-- S -->
+		<spawner name="SleeperTestChamberGSList" count="2,4"/>
+	</group>
+	<group name="S_TestChamberDecoy_Med" emptyChance="0.1" decoyChance="1.0" decoy1hpChance="0.2"> <!-- M -->
+		<spawner name="SleeperTestChamberGSList" count="3,7"/>
+	</group>
+
+	<group name="Wolves" emptyChance="0.25" decoyChance="0" decoy1hpChance="0"> 
+		<spawner name="WolfDen" count="2,3"/>
+	</group>
+	
+	<group name="GasStation" emptyChance="0.05" decoyChance="0" decoy1hpChance="0"> 
+		<spawner name="ZombieGasStation" count="4,8"/>
+	</group>
+	
+	<group name="Hospital" emptyChance="0" decoyChance="0" decoy1hpChance="0"> 
+		<spawner name="ZombieHospital" count="4,8"/>
+	</group>
+	
+	<group name="CopsSml" emptyChance="0" decoyChance="0" decoy1hpChance="0"> 
+		<spawner name="ZombieCopShop" count="2,4"/>
+	</group>
+	<group name="Cops" emptyChance="0" decoyChance="0" decoy1hpChance="0"> 
+		<spawner name="ZombieCopShop" count="4,8"/>
+	</group>
+	
+	<group name="Military" emptyChance="0" decoyChance="0" decoy1hpChance="0">
+		<spawner name="ZombieMilitary" count="4,8"/>
+	</group>
+	
+	<group name="Settlement" emptyChance="0" decoyChance="0" decoy1hpChance="0">
+		<spawner name="SleeperGSList" count="6,12"/>
+	</group>
+	
+	<group name="Hotel" emptyChance="0" decoyChance="0" decoy1hpChance="0">
+		<spawner name="ZombieHotel" count="10,12"/>
+	</group>
+	<group name="OstHotel" emptyChance="0" decoyChance="0" decoy1hpChance="0">
+		<spawner name="ZombieHotel" count="8,10"/>
+	</group>
+	<group name="RoadHotel1" emptyChance="0" decoyChance="0" decoy1hpChance="0">
+		<spawner name="ZombieHotel" count="8,10"/>
+	</group>
+	<group name="RoadHotel2" emptyChance="0" decoyChance="0" decoy1hpChance="0">
+		<spawner name="ZombieHotel" count="8,10"/>
+	</group>
+	
+	<group name="Apt5" emptyChance="0" decoyChance="0" decoy1hpChance="0">
+		<spawner name="ZombieHotel" count="10,12"/>
+	</group>
+	<group name="Apt6" emptyChance="0" decoyChance="0" decoy1hpChance="0">
+		<spawner name="ZombieHotel" count="12,14"/>
+	</group>
+	
+	
+	<group name="Diner" emptyChance="0" decoyChance="0" decoy1hpChance="0">
+		<spawner name="ZombieHotel" count="8,12"/>
+	</group>
+	
+	<group name="Store" emptyChance="0" decoyChance="0" decoy1hpChance="0">
+		<spawner name="ZombieHotel" count="2,4"/>
+	</group>
+	
+	<group name="SupplyCrate" emptyChance="0" decoyChance="0" decoy1hpChance="0">
+		<spawner name="SupplyCrateSpwnr" count="2,4"/>
+	</group>
+	
+	<spawner name="SleeperTestChamberGSList">
+		<gamestage stage="1"><spawn group="ZombieFullActiveMix" num="1" maxAlive="1" duration="1"/></gamestage>
+		<gamestage stage="400"><spawn group="ZombieFullActiveMix" num="1" maxAlive="1" duration="1"/></gamestage>
+		<gamestage stage="600"><spawn group="ZombieFullActiveMix" num="1" maxAlive="1" duration="1"/></gamestage>
+	</spawner>
+	
+	
+
+	<!-- spawners -->
+	<spawner name="WolfDen">
+		<gamestage stage="1"><spawn group="WolfDenGRP" num="2" maxAlive="2" duration="1"/></gamestage>
+	</spawner>
+
+	<spawner name="FeralZombieHorde">
+		<gamestage stage="1"><spawn group="ZombieSLPRActiveMix" num="1" maxAlive="1" duration="1"/></gamestage>
+	</spawner>
+
+	<spawner name="ZombieBikerBarHorde">
+		<gamestage stage="1"><spawn group="ZombieSLPRActiveMix" num="1" maxAlive="1" duration="1"/></gamestage>
+	</spawner>
+
+	<spawner name="ZombieFootballStadiumHorde">
+		<gamestage stage="1"><spawn group="ZombieSLPRActiveMix" num="1" maxAlive="1" duration="1"/></gamestage>
+	</spawner>
+
+	<spawner name="ZombieGhostTownHorde">
+		<gamestage stage="1"><spawn group="ZombieSLPRActiveMix" num="1" maxAlive="1" duration="1"/></gamestage>
+	</spawner>
+
+	<spawner name="ZombieSoldierHorde">
+		<gamestage stage="1"><spawn group="ZombieSLPRActiveMix" num="1" maxAlive="1" duration="1"/></gamestage>
+	</spawner>
+
+	<spawner name="ZombieUtilityWorkerHorde">
+		<gamestage stage="1"><spawn group="ZombieSLPRActiveMix" num="1" maxAlive="1" duration="1"/></gamestage>
+	</spawner>
+
+	<spawner name="SnowZombieHorde">
+		<gamestage stage="1"><spawn group="SnowZombies" num="1" maxAlive="1" duration="1"/></gamestage>
+	</spawner>
+
+	<spawner name="ZombieDogHorde">
+		<gamestage stage="1"><spawn group="ZombieDogGroup" num="1" maxAlive="1" duration="1"/></gamestage>
+	</spawner>
+
+	<spawner name="ZombieBusinessManHorde">
+		<gamestage stage="1"><spawn group="ZombieSLPRActiveMix" num="1" maxAlive="1" duration="1"/></gamestage>
+	</spawner>
+
+	<spawner name="ZombieBadassHorde">
+		<gamestage stage="1"><spawn group="ZombieSLPRActiveMix" num="1" maxAlive="1" duration="1"/></gamestage>
+	</spawner>
+	
+	<spawner name="ZombieCopShop">
+		<gamestage stage="1"><spawn group="ZombieCopShopMix" num="1" maxAlive="1" duration="1"/></gamestage>
+		<gamestage stage="200"><spawn group="ZombieCopShopMix" num="1" maxAlive="1" duration="1"/></gamestage>
+		<gamestage stage="400"><spawn group="ZombieCopShopMix" num="2" maxAlive="2" duration="1"/></gamestage>
+	</spawner>
+	
+	<spawner name="ZombieHospital">
+		<gamestage stage="1"><spawn group="ZombieHospitalMix" num="1" maxAlive="1" duration="1"/></gamestage>
+		<gamestage stage="200"><spawn group="ZombieHospitalMix" num="1" maxAlive="1" duration="1"/></gamestage>
+		<gamestage stage="400"><spawn group="ZombieHospitalMix" num="2" maxAlive="2" duration="1"/></gamestage>
+	</spawner>
+	
+	<spawner name="ZombieGasStation">
+		<gamestage stage="1"><spawn group="ZombieGasStationMix" num="1" maxAlive="1" duration="1"/></gamestage>
+		<gamestage stage="200"><spawn group="ZombieGasStationMix" num="1" maxAlive="1" duration="1"/></gamestage>
+		<gamestage stage="400"><spawn group="ZombieGasStationMix" num="2" maxAlive="2" duration="1"/></gamestage>
+	</spawner>
+	
+	<spawner name="ZombieMilitary">
+		<gamestage stage="1"><spawn group="ZombieMilitaryMix" num="1" maxAlive="1" duration="1"/></gamestage>
+		<gamestage stage="200"><spawn group="ZombieMilitaryMix" num="1" maxAlive="1" duration="1"/></gamestage>
+		<gamestage stage="400"><spawn group="ZombieMilitaryMix" num="2" maxAlive="2" duration="1"/></gamestage>
+	</spawner>
+	
+	<spawner name="ZombieHotel">
+		<gamestage stage="1"><spawn group="ZombieHotelMix" num="1" maxAlive="1" interval="1" duration="1"/></gamestage>
+		<gamestage stage="200"><spawn group="ZombieHotelMix" num="1" maxAlive="1" interval="1" duration="1"/></gamestage>
+		<gamestage stage="400"><spawn group="ZombieHotelMix" num="2" maxAlive="2" interval="1" duration="1"/></gamestage>
+	</spawner>
+	
+	<spawner name="ZombieDiner">
+		<gamestage stage="1"><spawn group="ZombieHotelMix" num="1" maxAlive="1" interval="1" duration="1"/></gamestage>
+		<gamestage stage="200"><spawn group="ZombieHotelMix" num="2" maxAlive="2" interval="1" duration="1"/></gamestage>
+		<gamestage stage="400"><spawn group="ZombieHotelMix" num="2" maxAlive="2" interval="1" duration="1"/></gamestage>
+	</spawner>
+	
+	<spawner name="SupplyCrateSpwnr">
+		<gamestage stage="1"><spawn group="SupplyCrates" num="1" maxAlive="1" interval="1" duration="1"/></gamestage>
+	</spawner>
+
+
+	<!-- https://7daystodie.com/forums/showthread.php?56533-Gamestage-Blood-Moon-Horde-generator -->
+	<!-- XXXXXXXXXXXXXXXXXXXXXXXXXXXX  start: auto generated sleeper horde gamestages  XXXXXXXXXXXXXXXXXXXXXXXXXXXX -->
+	<spawner name="SleeperGSList">
+		<gamestage stage="01"><spawn group="ZombieSLPRActiveMix" num="2" maxAlive="2" interval="20"/><spawn group="ZombieSLPRActiveMix" num="1" maxAlive="1" interval="20"/><spawn group="ZombieSLPRActiveMix" num="1" maxAlive="1" interval="20"/></gamestage>
+		<gamestage stage="200"><spawn group="ZombieSLPRActiveMix" num="2" maxAlive="2" interval="20"/><spawn group="ZombieSLPRActiveMix" num="2" maxAlive="2" interval="20"/><spawn group="ZombieSLPRActiveMix" num="1" maxAlive="1" interval="20"/></gamestage>
+		<gamestage stage="400"><spawn group="ZombieSLPRActiveMix" num="2" maxAlive="2" interval="20"/><spawn group="ZombieSLPRActiveMix" num="2" maxAlive="2" interval="20"/><spawn group="ZombieSLPRActiveMix" num="1" maxAlive="1" interval="20"/></gamestage>
+		<gamestage stage="600"><spawn group="ZombieSLPRActiveMix" num="2" maxAlive="2" interval="20"/><spawn group="ZombieSLPRActiveMix" num="2" maxAlive="2" interval="20"/><spawn group="ZombieSLPRActiveMix" num="2" maxAlive="2" interval="20"/></gamestage>
+		<gamestage stage="800"><spawn group="ZombieSLPRActiveMix" num="3" maxAlive="3" interval="20"/><spawn group="ZombieSLPRActiveMix" num="2" maxAlive="2" interval="20"/><spawn group="ZombieSLPRActiveMix" num="2" maxAlive="2" interval="20"/></gamestage>
+		<gamestage stage="1000"><spawn group="ZombieSLPRActiveMix" num="3" maxAlive="3" interval="20"/><spawn group="ZombieSLPRActiveMix" num="3" maxAlive="3" interval="20"/><spawn group="ZombieSLPRActiveMix" num="2" maxAlive="2" interval="20"/></gamestage>
+		<gamestage stage="1200"><spawn group="ZombieSLPRActiveMix" num="3" maxAlive="3" interval="20"/><spawn group="ZombieSLPRActiveMix" num="3" maxAlive="3" interval="20"/><spawn group="ZombieSLPRActiveMix" num="3" maxAlive="3" interval="20"/></gamestage>
+		<gamestage stage="1400"><spawn group="ZombieSLPRActiveMix" num="4" maxAlive="4" interval="20"/><spawn group="ZombieSLPRActiveMix" num="3" maxAlive="3" interval="20"/><spawn group="ZombieSLPRActiveMix" num="3" maxAlive="3" interval="20"/></gamestage>
+		<gamestage stage="1600"><spawn group="ZombieSLPRActiveMix" num="4" maxAlive="4" interval="20"/><spawn group="ZombieSLPRActiveMix" num="4" maxAlive="4" interval="20"/><spawn group="ZombieSLPRActiveMix" num="3" maxAlive="3" interval="20"/></gamestage>
+		<gamestage stage="1800"><spawn group="ZombieSLPRActiveMix" num="4" maxAlive="4" interval="20"/><spawn group="ZombieSLPRActiveMix" num="4" maxAlive="4" interval="20"/><spawn group="ZombieSLPRActiveMix" num="4" maxAlive="4" interval="20"/></gamestage>
+		<gamestage stage="2000"><spawn group="ZombieSLPRActiveMix" num="5" maxAlive="5" interval="20"/><spawn group="ZombieSLPRActiveMix" num="4" maxAlive="4" interval="20"/><spawn group="ZombieSLPRActiveMix" num="4" maxAlive="4" interval="20"/></gamestage>
+		<gamestage stage="2200"><spawn group="ZombieSLPRActiveMix" num="5" maxAlive="5" interval="20"/><spawn group="ZombieSLPRActiveMix" num="5" maxAlive="5" interval="20"/><spawn group="ZombieSLPRActiveMix" num="4" maxAlive="4" interval="20"/></gamestage>
+		<gamestage stage="2400"><spawn group="ZombieSLPRActiveMix" num="5" maxAlive="5" interval="20"/><spawn group="ZombieSLPRActiveMix" num="5" maxAlive="5" interval="20"/><spawn group="ZombieSLPRActiveMix" num="5" maxAlive="5" interval="20"/></gamestage>
+		<gamestage stage="2600"><spawn group="ZombieSLPRActiveMix" num="6" maxAlive="6" interval="20"/><spawn group="ZombieSLPRActiveMix" num="5" maxAlive="5" interval="20"/><spawn group="ZombieSLPRActiveMix" num="5" maxAlive="5" interval="20"/></gamestage>
+		<gamestage stage="2800"><spawn group="ZombieSLPRActiveMix" num="6" maxAlive="6" interval="20"/><spawn group="ZombieSLPRActiveMix" num="6" maxAlive="6" interval="20"/><spawn group="ZombieSLPRActiveMix" num="5" maxAlive="5" interval="20"/></gamestage>
+		<gamestage stage="3000"><spawn group="ZombieSLPRActiveMix" num="6" maxAlive="6" interval="20"/><spawn group="ZombieSLPRActiveMix" num="6" maxAlive="6" interval="20"/><spawn group="ZombieSLPRActiveMix" num="6" maxAlive="6" interval="20"/></gamestage>
+		<gamestage stage="3200"><spawn group="ZombieSLPRActiveMix" num="7" maxAlive="7" interval="20"/><spawn group="ZombieSLPRActiveMix" num="6" maxAlive="6" interval="20"/><spawn group="ZombieSLPRActiveMix" num="6" maxAlive="6" interval="20"/></gamestage>
+		<gamestage stage="3400"><spawn group="ZombieSLPRActiveMix" num="7" maxAlive="7" interval="20"/><spawn group="ZombieSLPRActiveMix" num="7" maxAlive="7" interval="20"/><spawn group="ZombieSLPRActiveMix" num="6" maxAlive="6" interval="20"/></gamestage>
+		<gamestage stage="3600"><spawn group="ZombieSLPRActiveMix" num="7" maxAlive="7" interval="20"/><spawn group="ZombieSLPRActiveMix" num="7" maxAlive="7" interval="20"/><spawn group="ZombieSLPRActiveMix" num="7" maxAlive="7" interval="20"/></gamestage>
+		<gamestage stage="3800"><spawn group="ZombieSLPRActiveMix" num="8" maxAlive="8" interval="20"/><spawn group="ZombieSLPRActiveMix" num="7" maxAlive="7" interval="20"/><spawn group="ZombieSLPRActiveMix" num="7" maxAlive="7" interval="20"/></gamestage>
+		<gamestage stage="4000"><spawn group="ZombieSLPRActiveMix" num="8" maxAlive="8" interval="20"/><spawn group="ZombieSLPRActiveMix" num="8" maxAlive="8" interval="20"/><spawn group="ZombieSLPRActiveMix" num="7" maxAlive="7" interval="20"/></gamestage>
+		<gamestage stage="4200"><spawn group="ZombieSLPRActiveMix" num="8" maxAlive="8" interval="20"/><spawn group="ZombieSLPRActiveMix" num="8" maxAlive="8" interval="20"/><spawn group="ZombieSLPRActiveMix" num="8" maxAlive="8" interval="20"/></gamestage>
+		<gamestage stage="4400"><spawn group="ZombieSLPRActiveMix" num="9" maxAlive="9" interval="20"/><spawn group="ZombieSLPRActiveMix" num="8" maxAlive="8" interval="20"/><spawn group="ZombieSLPRActiveMix" num="8" maxAlive="8" interval="20"/></gamestage>
+		<gamestage stage="4600"><spawn group="ZombieSLPRActiveMix" num="9" maxAlive="9" interval="20"/><spawn group="ZombieSLPRActiveMix" num="9" maxAlive="9" interval="20"/><spawn group="ZombieSLPRActiveMix" num="8" maxAlive="8" interval="20"/></gamestage>
+		<gamestage stage="4800"><spawn group="ZombieSLPRActiveMix" num="9" maxAlive="9" interval="20"/><spawn group="ZombieSLPRActiveMix" num="9" maxAlive="9" interval="20"/><spawn group="ZombieSLPRActiveMix" num="9" maxAlive="9" interval="20"/></gamestage>
+		<gamestage stage="5000"><spawn group="ZombieSLPRActiveMix" num="10" maxAlive="10" interval="20"/><spawn group="ZombieSLPRActiveMix" num="9" maxAlive="9" interval="20"/><spawn group="ZombieSLPRActiveMix" num="9" maxAlive="9" interval="20"/></gamestage>
+		<gamestage stage="5200"><spawn group="ZombieSLPRActiveMix" num="9" maxAlive="9" interval="20"/><spawn group="ZombieSLPRActiveMix" num="10" maxAlive="10" interval="20"/><spawn group="ZombieSLPRActiveMix" num="9" maxAlive="9" interval="20"/></gamestage>
+		<gamestage stage="5400"><spawn group="ZombieSLPRActiveMix" num="9" maxAlive="9" interval="20"/><spawn group="ZombieSLPRActiveMix" num="9" maxAlive="9" interval="20"/><spawn group="ZombieSLPRActiveMix" num="10" maxAlive="10" interval="20"/></gamestage>
+		<gamestage stage="5600"><spawn group="ZombieSLPRActiveMix" num="10" maxAlive="10" interval="20"/><spawn group="ZombieSLPRActiveMix" num="10" maxAlive="10" interval="20"/><spawn group="ZombieSLPRActiveMix" num="9" maxAlive="9" interval="20"/></gamestage>
+		<gamestage stage="5800"><spawn group="ZombieSLPRActiveMix" num="10" maxAlive="10" interval="20"/><spawn group="ZombieSLPRActiveMix" num="9" maxAlive="9" interval="20"/><spawn group="ZombieSLPRActiveMix" num="10" maxAlive="10" interval="20"/></gamestage>
+		<gamestage stage="6000"><spawn group="ZombieSLPRActiveMix" num="10" maxAlive="10" interval="20"/><spawn group="ZombieSLPRActiveMix" num="10" maxAlive="10" interval="20"/><spawn group="ZombieSLPRActiveMix" num="10" maxAlive="10" interval="20"/></gamestage>
+	</spawner>
+	<!-- XXXXXXXXXXXXXXXXXXXXXXXXXXXX  end: auto generated sleeper horde gamestages  XXXXXXXXXXXXXXXXXXXXXXXXXXXX -->
+
+
+	<!-- XXXXXXXXXXXXXXXXXXXXXXXXXXXX  start: auto generated screamer / scout horde gamestages  XXXXXXXXXXXXXXXXXXXXXXXXXXXX -->
+	<spawner name="ScoutGSList">
+	
+		<gamestage stage="01"><spawn group="ZombieLDRFeralActiveMix" num="3" maxAlive="3" interval="20"/><spawn group="ZombieLDRFeralActiveMix" num="2" maxAlive="2" interval="20"/><spawn group="ZombieLDRFeralActiveMix" num="3" maxAlive="3" interval="20"/></gamestage>
+		<gamestage stage="200"><spawn group="ZombieLDRFeralActiveMix" num="2" maxAlive="2" interval="20"/><spawn group="ZombieLDRFeralActiveMix" num="3" maxAlive="3" interval="20"/><spawn group="ZombieLDRFeralActiveMix" num="3" maxAlive="3" interval="20"/></gamestage>
+		<gamestage stage="400"><spawn group="ZombieLDRFeralActiveMix" num="3" maxAlive="3" interval="20"/><spawn group="ZombieLDRFeralActiveMix" num="2" maxAlive="2" interval="20"/><spawn group="ZombieLDRFeralActiveMix" num="3" maxAlive="3" interval="20"/></gamestage>
+		<gamestage stage="600"><spawn group="ZombieLDRFeralActiveMix" num="2" maxAlive="2" interval="20"/><spawn group="ZombieLDRFeralActiveMix" num="3" maxAlive="3" interval="20"/><spawn group="ZombieLDRFeralActiveMix" num="3" maxAlive="3" interval="20"/></gamestage>
+		<gamestage stage="800"><spawn group="ZombieLDRFeralActiveMix" num="3" maxAlive="3" interval="20"/><spawn group="ZombieLDRFeralActiveMix" num="2" maxAlive="2" interval="20"/><spawn group="ZombieLDRFeralActiveMix" num="3" maxAlive="3" interval="20"/></gamestage>
+		<gamestage stage="1000"><spawn group="ZombieLDRFeralActiveMix" num="4" maxAlive="4" interval="20"/><spawn group="ZombieLDRFeralActiveMix" num="3" maxAlive="3" interval="20"/><spawn group="ZombieLDRFeralActiveMix" num="4" maxAlive="4" interval="20"/></gamestage>
+		<gamestage stage="1200"><spawn group="ZombieLDRFeralActiveMix" num="3" maxAlive="3" interval="20"/><spawn group="ZombieLDRFeralActiveMix" num="4" maxAlive="4" interval="20"/><spawn group="ZombieLDRFeralActiveMix" num="3" maxAlive="3" interval="20"/></gamestage>
+		<gamestage stage="1400"><spawn group="ZombieLDRFeralActiveMix" num="4" maxAlive="4" interval="20"/><spawn group="ZombieLDRFeralActiveMix" num="3" maxAlive="3" interval="20"/><spawn group="ZombieLDRFeralActiveMix" num="4" maxAlive="4" interval="20"/></gamestage>
+		<gamestage stage="1600"><spawn group="ZombieLDRFeralActiveMix" num="3" maxAlive="3" interval="20"/><spawn group="ZombieLDRFeralActiveMix" num="4" maxAlive="4" interval="20"/><spawn group="ZombieLDRFeralActiveMix" num="3" maxAlive="3" interval="20"/></gamestage>
+		<gamestage stage="1800"><spawn group="ZombieLDRFeralActiveMix" num="4" maxAlive="4" interval="20"/><spawn group="ZombieLDRFeralActiveMix" num="3" maxAlive="3" interval="20"/><spawn group="ZombieLDRFeralActiveMix" num="4" maxAlive="4" interval="20"/></gamestage>
+		<gamestage stage="2000"><spawn group="ZombieLDRFeralActiveMix" num="5" maxAlive="5" interval="20"/><spawn group="ZombieLDRFeralActiveMix" num="4" maxAlive="4" interval="20"/><spawn group="ZombieLDRFeralActiveMix" num="5" maxAlive="5" interval="20"/></gamestage>
+		<gamestage stage="2200"><spawn group="ZombieLDRFeralActiveMix" num="4" maxAlive="6" interval="20"/><spawn group="ZombieLDRFeralActiveMix" num="5" maxAlive="5" interval="20"/><spawn group="ZombieLDRFeralActiveMix" num="4" maxAlive="4" interval="20"/></gamestage>
+		<gamestage stage="2400"><spawn group="ZombieLDRFeralActiveMix" num="5" maxAlive="7" interval="20"/><spawn group="ZombieLDRFeralActiveMix" num="4" maxAlive="4" interval="20"/><spawn group="ZombieLDRFeralActiveMix" num="5" maxAlive="5" interval="20"/></gamestage>
+		<gamestage stage="2600"><spawn group="ZombieLDRFeralActiveMix" num="4" maxAlive="4" interval="20"/><spawn group="ZombieLDRFeralActiveMix" num="5" maxAlive="5" interval="20"/><spawn group="ZombieLDRFeralActiveMix" num="4" maxAlive="4" interval="20"/></gamestage>
+		<gamestage stage="2800"><spawn group="ZombieLDRFeralActiveMix" num="5" maxAlive="5" interval="20"/><spawn group="ZombieLDRFeralActiveMix" num="4" maxAlive="4" interval="20"/><spawn group="ZombieLDRFeralActiveMix" num="5" maxAlive="5" interval="20"/></gamestage>
+		<gamestage stage="3000"><spawn group="ZombieLDRFeralActiveMix" num="6" maxAlive="6" interval="20"/><spawn group="ZombieLDRFeralActiveMix" num="5" maxAlive="5" interval="20"/><spawn group="ZombieLDRFeralActiveMix" num="6" maxAlive="6" interval="20"/></gamestage>
+		<gamestage stage="3200"><spawn group="ZombieLDRFeralActiveMix" num="5" maxAlive="5" interval="20"/><spawn group="ZombieLDRFeralActiveMix" num="6" maxAlive="6" interval="20"/><spawn group="ZombieLDRFeralActiveMix" num="5" maxAlive="5" interval="20"/></gamestage>
+		<gamestage stage="3400"><spawn group="ZombieLDRFeralActiveMix" num="6" maxAlive="6" interval="20"/><spawn group="ZombieLDRFeralActiveMix" num="5" maxAlive="5" interval="20"/><spawn group="ZombieLDRFeralActiveMix" num="6" maxAlive="6" interval="20"/></gamestage>
+		<gamestage stage="3600"><spawn group="ZombieLDRFeralActiveMix" num="5" maxAlive="5" interval="20"/><spawn group="ZombieLDRFeralActiveMix" num="6" maxAlive="6" interval="20"/><spawn group="ZombieLDRFeralActiveMix" num="5" maxAlive="5" interval="20"/></gamestage>
+		<gamestage stage="3800"><spawn group="ZombieLDRFeralActiveMix" num="6" maxAlive="6" interval="20"/><spawn group="ZombieLDRFeralActiveMix" num="5" maxAlive="5" interval="20"/><spawn group="ZombieLDRFeralActiveMix" num="6" maxAlive="6" interval="20"/></gamestage>
+		<gamestage stage="4000"><spawn group="ZombieLDRFeralActiveMix" num="7" maxAlive="7" interval="20"/><spawn group="ZombieLDRFeralActiveMix" num="6" maxAlive="6" interval="20"/><spawn group="ZombieLDRFeralActiveMix" num="7" maxAlive="7" interval="20"/></gamestage>
+		<gamestage stage="4200"><spawn group="ZombieLDRFeralActiveMix" num="6" maxAlive="6" interval="20"/><spawn group="ZombieLDRFeralActiveMix" num="7" maxAlive="7" interval="20"/><spawn group="ZombieLDRFeralActiveMix" num="6" maxAlive="6" interval="20"/></gamestage>
+		<gamestage stage="4400"><spawn group="ZombieLDRFeralActiveMix" num="7" maxAlive="7" interval="10"/><spawn group="ZombieLDRFeralActiveMix" num="6" maxAlive="6" interval="10"/><spawn group="ZombieLDRFeralActiveMix" num="7" maxAlive="7" interval="20"/></gamestage>
+		<gamestage stage="4600"><spawn group="ZombieLDRFeralActiveMix" num="6" maxAlive="6" interval="10"/><spawn group="ZombieLDRFeralActiveMix" num="7" maxAlive="7" interval="10"/><spawn group="ZombieLDRFeralActiveMix" num="6" maxAlive="6" interval="20"/></gamestage>
+		<gamestage stage="4800"><spawn group="ZombieLDRFeralActiveMix" num="7" maxAlive="7" interval="10"/><spawn group="ZombieLDRFeralActiveMix" num="6" maxAlive="6" interval="10"/><spawn group="ZombieLDRFeralActiveMix" num="7" maxAlive="7" interval="20"/></gamestage>
+		<gamestage stage="5000"><spawn group="ZombieLDRFeralActiveMix" num="8" maxAlive="8" interval="10"/><spawn group="ZombieLDRFeralActiveMix" num="7" maxAlive="7" interval="10"/><spawn group="ZombieLDRFeralActiveMix" num="8" maxAlive="8" interval="20"/></gamestage>
+		<gamestage stage="5200"><spawn group="ZombieLDRFeralActiveMix" num="7" maxAlive="7" interval="10"/><spawn group="ZombieLDRFeralActiveMix" num="8" maxAlive="8" interval="10"/><spawn group="ZombieLDRFeralActiveMix" num="7" maxAlive="7" interval="20"/></gamestage>
+		<gamestage stage="5400"><spawn group="ZombieLDRFeralActiveMix" num="8" maxAlive="8" interval="10"/><spawn group="ZombieLDRFeralActiveMix" num="7" maxAlive="7" interval="10"/><spawn group="ZombieLDRFeralActiveMix" num="8" maxAlive="8" interval="20"/></gamestage>
+		<gamestage stage="5600"><spawn group="ZombieLDRFeralActiveMix" num="7" maxAlive="7" interval="10"/><spawn group="ZombieLDRFeralActiveMix" num="8" maxAlive="8" interval="10"/><spawn group="ZombieLDRFeralActiveMix" num="7" maxAlive="7" interval="20"/></gamestage>
+		<gamestage stage="5800"><spawn group="ZombieLDRFeralActiveMix" num="8" maxAlive="8" interval="10"/><spawn group="ZombieLDRFeralActiveMix" num="7" maxAlive="7" interval="10"/><spawn group="ZombieLDRFeralActiveMix" num="8" maxAlive="8" interval="20"/></gamestage>
+		<gamestage stage="6000"><spawn group="ZombieLDRFeralActiveMix" num="10" maxAlive="10" interval="10"/><spawn group="ZombieLDRFeralActiveMix" num="10" maxAlive="10" interval="10"/><spawn group="ZombieLDRFeralActiveMix" num="10" maxAlive="10" interval="20"/></gamestage>
+		
+	</spawner>
+	<!-- XXXXXXXXXXXXXXXXXXXXXXXXXXXX  end: auto generated screamer / scout horde gamestages  XXXXXXXXXXXXXXXXXXXXXXXXXXXX -->
+
+	<!-- XXXXXXXXXXXXXXXXXXXXXXXXXXXX  start: auto generated feral horde gamestages  XXXXXXXXXXXXXXXXXXXXXXXXXXXX -->
+	<spawner name="BloodMoonHorde">
+		<!--<gamestage stage="01"><spawn group="feralHordeStageGS1" num="1" maxAlive="1" duration="5" interval="150"/></gamestage>-->
+	
+		<gamestage stage="01"><spawn group="ZombieFullActiveMix" num="60" maxAlive="15" duration="2"/><spawn group="ZombieLDRFeralActiveMix" num="30" maxAlive="6" duration="2"/><spawn group="ZombieLDRFeralActiveMix" num="250" maxAlive="5" duration="4"/></gamestage>
+		<gamestage stage="100"><spawn group="ZombieFullActiveMix" num="68" maxAlive="17" duration="2"/><spawn group="ZombieLDRFeralActiveMix" num="40" maxAlive="8" duration="2"/><spawn group="ZombieLDRFeralActiveMix" num="300" maxAlive="6" duration="4"/></gamestage>
+		<gamestage stage="200"><spawn group="ZombieFullActiveMix" num="76" maxAlive="19" duration="2"/><spawn group="ZombieLDRFeralActiveMix" num="45" maxAlive="9" duration="2"/><spawn group="ZombieLDRFeralActiveMix" num="350" maxAlive="7" duration="4"/></gamestage>
+		<gamestage stage="300"><spawn group="ZombieFullActiveMix" num="84" maxAlive="21" duration="2"/><spawn group="ZombieLDRFeralActiveMix" num="55" maxAlive="11" duration="2"/><spawn group="ZombieLDRFeralActiveMix" num="400" maxAlive="8" duration="4"/></gamestage>
+		<gamestage stage="400"><spawn group="ZombieFullActiveMix" num="92" maxAlive="23" duration="2"/><spawn group="ZombieLDRFeralActiveMix" num="65" maxAlive="13" duration="2"/><spawn group="ZombieLDRFeralActiveMix" num="450" maxAlive="9" duration="4"/></gamestage>
+		<gamestage stage="500"><spawn group="ZombieFullActiveMix" num="100" maxAlive="25" duration="2"/><spawn group="ZombieLDRFeralActiveMix" num="80" maxAlive="15" duration="2"/><spawn group="ZombieLDRFeralActiveMix" num="500" maxAlive="10" duration="4"/></gamestage>
+		
+	</spawner>
+	<!-- XXXXXXXXXXXXXXXXXXXXXXXXXXXX  end: auto generated feral horde gamestages  XXXXXXXXXXXXXXXXXXXXXXXXXXXX -->
+
+</gamestages>
